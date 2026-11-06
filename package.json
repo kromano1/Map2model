@@ -1,0 +1,24 @@
+{
+  "name": "topoforge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Turn any place on a free public map into a 3D-printable model (STL / multicolor 3MF), entirely in the browser.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "e2e": "vite build && node tests/e2e/smoke.mjs"
+  },
+  "dependencies": {
+    "earcut": "^3.0.1",
+    "fflate": "^0.8.2",
+    "leaflet": "^1.9.4",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7",
+    "vitest": "^2.1.8"
+  }
+}

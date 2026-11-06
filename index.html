@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TopoForge – print any place</title>
+    <meta name="description" content="Turn any place on OpenStreetMap into a 3D-printable STL or multicolor 3MF, right in your browser." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 26 L11 12 L16 19 L21 9 L30 26 Z' fill='%232f7d5b'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="app">
+      <aside id="panel">
+        <header class="brand">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M2 26 L11 12 L16 19 L21 9 L30 26 Z" /></svg>
+          <div>
+            <h1>TopoForge</h1>
+            <p>Print any place on Earth</p>
+          </div>
+        </header>
+
+        <section>
+          <h2>1 · Pick an area</h2>
+          <form id="search" class="row">
+            <input id="search-q" type="search" placeholder="Search a place or address" autocomplete="off" />
+            <button type="submit">Go</button>
+          </form>
+          <ul id="search-results" hidden></ul>
+          <div class="row">
+            <button id="draw" type="button" class="primary">Draw rectangle</button>
+            <button id="use-view" type="button">Use map view</button>
+          </div>
+          <p id="area-info" class="muted">Draw a rectangle on the map.</p>
+        </section>
+
+        <section>
+          <h2>2 · Model</h2>
+          <label>Width <span class="unit">mm</span><input id="widthMM" type="number" min="20" max="500" step="5" /></label>
+          <label>Base thickness <span class="unit">mm</span><input id="baseMM" type="number" min="0.4" max="20" step="0.2" /></label>
+          <label>Detail (cell size) <span class="unit">mm</span><input id="cellMM" type="number" min="0.2" max="5" step="0.1" /></label>
+          <label class="check"><input id="elevation" type="checkbox" /> Real terrain elevation</label>
+          <label>Vertical exaggeration <span class="unit">×</span><input id="exaggeration" type="number" min="0" max="20" step="0.1" /></label>
+          <label>Elevation source
+            <select id="elevationSource">
+              <option value="aws">Terrain Tiles on AWS</option>
+              <option value="mapterhorn">Mapterhorn</option>
+            </select>
+          </label>
+        </section>
+
+        <section>
+          <h2>3 · Layers</h2>
+          <div id="layers"></div>
+          <label>Building height scale <span class="unit">×</span><input id="buildingScale" type="number" min="0.1" max="20" step="0.1" /></label>
+          <label>Min. building height <span class="unit">mm</span><input id="minBuildingMM" type="number" min="0.2" max="10" step="0.1" /></label>
+          <label>Road width scale <span class="unit">×</span><input id="roadScale" type="number" min="0.2" max="10" step="0.1" /></label>
+          <label>Min. line width <span class="unit">mm</span><input id="minRoadMM" type="number" min="0.2" max="5" step="0.1" /></label>
+          <label class="file">GPX route
+            <input id="gpx" type="file" accept=".gpx,application/gpx+xml" />
+          </label>
+          <p id="gpx-info" class="muted" hidden></p>
+        </section>
+
+        <section class="actions">
+          <button id="generate" type="button" class="primary big" disabled>Generate model</button>
+          <button id="cancel" type="button" hidden>Cancel</button>
+          <div id="progress" hidden><div></div></div>
+          <p id="status" class="muted" role="status"></p>
+          <div class="row">
+            <button id="export-3mf" type="button" disabled>Download 3MF</button>
+            <button id="export-stl" type="button" disabled>Download STL</button>
+          </div>
+          <div class="row">
+            <button id="save" type="button">Save project</button>
+            <label class="button">Load project<input id="load" type="file" accept=".json" hidden /></label>
+          </div>
+        </section>
+
+        <footer>
+          Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> (ODbL).
+          <span id="elev-credit"></span>
+          Search by <a href="https://nominatim.org" target="_blank" rel="noopener">Nominatim</a>.
+        </footer>
+      </aside>
+
+      <main>
+        <nav class="tabs" role="tablist">
+          <button role="tab" data-view="map" class="active">Map</button>
+          <button role="tab" data-view="preview">3D preview</button>
+        </nav>
+        <div id="map" class="view active"></div>
+        <div id="preview" class="view"><p class="empty">Generate a model to see it here.</p></div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
