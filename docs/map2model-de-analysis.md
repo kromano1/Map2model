@@ -154,3 +154,93 @@ present; `building:colour` is read.
   be written from scratch on the open data sources and libraries above
   (Leaflet or MapLibre, three.js, fflate, earcut, etc.), not copied from the
   site's bundles, and should use its own name and branding.
+
+---
+
+# Appendix: the original map2model.com (smoggy3d)
+
+Source: a Safari `.webarchive` of the Wayback Machine summary page for
+map2model.com, provided by the user. It contained the original site's main
+app bundle (`/assets/index-BlT0JDrb.js`, ~2.8 MB, Wayback capture
+2026-01-19) plus its cookie-consent config. The latest snapshot the Wayback
+API reports is 2026-09-16. The live Wayback Machine could not be reached from
+this environment, so other pages and lazy-loaded chunks (About, Changelog,
+the turf worker) were not inspected. As above, this is a description, not a
+copy of the code.
+
+## Stack
+
+| Layer | map2model.com (original) | map2model.de (successor) |
+|---|---|---|
+| Framework | Vue 3.5 SPA built with Vite, Vue Router, Pinia | Next.js (React) on Vercel |
+| UI kit | PrimeVue + Tailwind, Inter font | Tailwind, Geist, Lucide |
+| 2D map | Leaflet + Leaflet-Geoman (draw/edit tools, many languages); OSM, OSM-France and OSM-DE tile servers | Leaflet; OSM + Esri imagery |
+| 3D | three.js with OrbitControls | three.js via react-three-fiber |
+| Geometry | Turf.js run in a pool of Web Workers (up to 8, one per core), a Clipper-style polygon clipping port, three.js extrusion | three.js extrusion/triangulation helpers |
+| Elevation | **Own backend**: `POST https://topoapi.map2model.com/elevation` with a list of lat/lng points; response `{status:"OK", results:[{elevation, location}]}` (Google-Elevation-API-like shape) | Mapterhorn / AWS Terrarium tiles fetched by the browser |
+| OSM data | Browser calls Overpass directly: overpass-api.de, falling back to overpass.private.coffee and overpass.osm.jp | Proxied through its own `/api/osm` |
+| Geocoding | Nominatim | Nominatim |
+| Monetization | Google AdSense side card, Buy Me a Coffee link, "Commercial License" page | No ads; commercial license by e-mail |
+| Consent / analytics | Cookiebot, Google tag (gtag) | Vercel Analytics |
+
+Routes: `/`, `/about`, `/changelog`, `/privacy-policy`, `/contact`,
+`/commercial-license`.
+
+Notable detail: on load the app calls Cloudflare's public `cdn-cgi/trace`
+endpoints (several mirrors, first success wins) to read the visitor's country
+code. If the country is **not** an EU member state, a "Commercial License"
+item is added to the navigation; EU visitors don't see it.
+
+## Workflow and features
+
+1. Search an address (Nominatim) or pan the map; draw a rectangle, circle,
+   polygon or hexagon, or set a custom size. Selections larger than
+   **150 km × 150 km** are rejected ("Area Too Large").
+2. "Generate Mesh": progress messages "Processing features…",
+   "Processing terrain…".
+3. Terrain: the bbox is sampled as a regular grid of points (the grid is
+   thinned when it would exceed a point budget), sent to the elevation API,
+   smoothed with a median filter (radius setting), scaled by an exaggeration
+   factor and built into a surface over a base. On API failure it falls back
+   to a flat base.
+4. OSM layers fetched in one Overpass query (`[out:json][timeout:30]`,
+   `out geom qt`), toggled per layer: buildings (with roofs), roads (with
+   per-type selection, link roads, footpaths, underground roads), railways
+   (incl. monorail etc.), aeroways, waterways, water (with "Cut Out Water"
+   and a water base), ocean via coastlines, greenery (parks, grass,
+   farmland, orchards, vineyards, golf, camping…), beaches/sand, piers.
+5. Addons: GPX path (upload, color, height, thickness), frame (color,
+   height, thickness), map-wide buildings scale, an in-app building editor
+   ("Edit Shape", "Add Point").
+6. Export: **3MF**, **STL**, or **split STL (ZIP)** (one STL per part).
+   The 3MF uses the core + production extension namespaces plus the
+   slic3r/PrusaSlicer namespace, and identifies itself as written by Bambu
+   Studio, so Bambu/Prusa slicers open it as a multi-part, multi-color
+   project.
+7. Save / Load Project.
+
+## Default print parameters found in the bundle (mm unless noted)
+
+Map width 150 · base layer 1 · min building height 1 · road height 0.6
+(road depth 0) · water height 0.4, water depth 0.8, water base 0.2 ·
+greenery 0.4 · beach 0.2 · pier 0.8 · GPX path height 1 · frame height 1.4,
+frame thickness 3 · printable height 256 · elevation exaggeration 1 · median
+filter radius 1.
+
+## What the successor changed
+
+- Replaced the private elevation API with public terrain tiles, and moved
+  Overpass behind a server proxy (plus an anti-mirroring gate).
+- Rewrote the app in React/Next.js; no ads.
+- Added: elevation-band and satellite coloring, scale bar / north arrow /
+  frame text, tiling and jigsaw puzzles, auto exaggeration, ski runs.
+- Dropped/changed: split-STL ZIP export, the EU-gated commercial license
+  page, and project-file compatibility with the original.
+
+## Implications for an independent rebuild
+
+The original depended on `topoapi.map2model.com`, which is presumably gone
+with the site, so any rebuild needs its own elevation source (Mapterhorn or
+AWS Terrarium tiles work client-side with no backend). Everything else
+(Overpass, Nominatim, Leaflet, three.js, Turf, a 3MF zip writer) is open
+and can be assembled from scratch.
